@@ -1,0 +1,14 @@
+{
+    // launch terminal into tmux session 'dino'
+    "terminal.integrated.defaultProfile.linux": "tmux",
+    "terminal.integrated.profiles.linux": {
+        "tmux": {
+            "path": "tmux",
+            "icon": "terminal-tmux",
+            "args": [
+                "-c",
+                "if command -v tmux &>> /dev/null && [ -z \"$TMUX\" ]; then tmux attach-session -t dino || tmux new-session -s dino; else /bin/bash; fi"
+            ]
+        }
+    }
+}
