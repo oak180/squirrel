@@ -1,5 +1,5 @@
 {
-    // launch terminal into tmux session 'dino'
+    // launch terminal into tmux session 'squirrel'
     "terminal.integrated.defaultProfile.linux": "tmux",
     "terminal.integrated.profiles.linux": {
         "tmux": {
@@ -7,7 +7,7 @@
             "icon": "terminal-tmux",
             "args": [
                 "-c",
-                "if command -v tmux &>> /dev/null && [ -z \"$TMUX\" ]; then tmux attach-session -t dino || tmux new-session -s dino; else /bin/bash; fi"
+                "if command -v tmux &>> /dev/null && [ -z \"$TMUX\" ]; then tmux attach-session -t squirrel || tmux new-session -s squirrel; else /bin/bash; fi"
             ]
         }
     }
