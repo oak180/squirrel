@@ -1,4 +1,13 @@
 {
+    // hide folders
+    "files.exclude": {
+        ".venv": true,
+        ".python-version": true,
+        "main.py": true,
+        "README.md": true,
+        "uv.lock": true,
+    },
+
     // launch terminal into tmux session 'squirrel'
     "terminal.integrated.defaultProfile.linux": "tmux",
     "terminal.integrated.profiles.linux": {
@@ -10,5 +19,11 @@
                 "if command -v tmux &>> /dev/null && [ -z \"$TMUX\" ]; then tmux attach-session -t squirrel || tmux new-session -s squirrel; else /bin/bash; fi"
             ]
         }
-    }
+    },
+
+    "[python]": {
+        // "notebook.defaultFormatter": "charliermarsh.ruff",
+        "editor.defaultFormatter": "charliermarsh.ruff"
+    },
+    "ruff.nativeServer": "on",
 }
