@@ -10,5 +10,6 @@ dependencies = [
     "mysqlclient>=2.2.7",
     "pandas>=2.3.1",
     "prettytable==3.11",
+    "python-dotenv>=1.1.1",
     "requests>=2.32.5",
 ]
