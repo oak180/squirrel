@@ -2,8 +2,10 @@
     // hide folders
     "files.exclude": {
         ".venv": true,
+        ".env": true,
         ".python-version": true,
         "main.py": true,
+        "pyproject.toml": true,
         "README.md": true,
         "uv.lock": true,
     },
