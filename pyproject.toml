@@ -11,5 +11,6 @@ dependencies = [
     "pandas>=2.3.1",
     "prettytable==3.11",
     "python-dotenv>=1.1.1",
+    "pyyaml>=6.0.2",
     "requests>=2.32.5",
 ]

@@ -1,26 +1,12 @@
 {
     // hide folders
     "files.exclude": {
+        ".env": false,
+        "pyproject.toml": false,
         ".venv": true,
-        ".env": true,
         ".python-version": true,
-        "main.py": true,
-        "pyproject.toml": true,
         "README.md": true,
         "uv.lock": true,
-    },
-
-    // launch terminal into tmux session 'squirrel'
-    "terminal.integrated.defaultProfile.linux": "tmux",
-    "terminal.integrated.profiles.linux": {
-        "tmux": {
-            "path": "tmux",
-            "icon": "terminal-tmux",
-            "args": [
-                "-c",
-                "if command -v tmux &>> /dev/null && [ -z \"$TMUX\" ]; then tmux attach-session -t squirrel || tmux new-session -s squirrel; else /bin/bash; fi"
-            ]
-        }
     },
 
     "[python]": {
@@ -28,4 +14,5 @@
         "editor.defaultFormatter": "charliermarsh.ruff"
     },
     "ruff.nativeServer": "on",
+    "ruff.format.preview": false,
 }
