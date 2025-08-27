@@ -2,13 +2,15 @@ from pathlib import Path
 from typing import Any
 import yaml
 
-from .env_vars import DATA_DIR
+from .env_vars import OUTPUT, TEMPLATES, DICTIONARIES, TEMPORARY
 
-DATA_DIR: Path = Path(DATA_DIR)
+
+def extract_dictionary():
+    pass
 
 
 def can_write(target_path: str, overwrite: bool = False) -> Path:
-    target_file: Path = DATA_DIR.joinpath(Path(target_path))
+    target_file: Path = OUTPUT.joinpath(Path(target_path))
     if target_file.exists() and not overwrite:
         raise ValueError(f'{target_file.name} already exists')
 
@@ -24,3 +26,8 @@ def handle_write(response_data: Any, target_file: Path) -> None:
 
 if __name__ == '__main__':
     pass
+else:
+    OUTPUT: Path = Path('OUTPUT')
+    TEMPLATES: Path = Path('TEMPLATES')
+    DICTIONARIES: Path = Path('DICTIONARIES')
+    TEMPORARY: Path = Path('TEMPORARY')
