@@ -1,0 +1,140 @@
+name:
+  props:
+  - subresource: True
+  fields:
+  - givenName:
+      type: str
+  - middleName:
+      type: str
+  - familyName:
+      type: str
+  - familyName2:
+      type: str
+  - preferred:
+      type: str
+  - prefix:
+      type: str
+  - uuid:
+      type: str
+      desc: the UUID assigned to the name within the database
+address:
+  props:
+  - subresource: True
+  fields:
+  - preferred:
+      type: bool
+  - address1:
+      type: str
+  - address2:
+      type: str
+  - cityVillage:
+      type: str
+  - stateProvince:
+      type: str
+  - country:
+      type: str
+  - postalCode:
+      type: str
+  - countyDistrict:
+      type: str
+  - address3:
+      type: str
+  - address4:
+      type: str
+  - address5:
+      type: str
+  - address6:
+      type: str
+  - startDate:
+      type: str
+  - endDate:
+      type: str
+  - latitude:
+      type: str
+  - longitude:
+      type: str
+person:
+  props:
+  - subresource: False
+  fields:
+  - names:
+      type: list[name]
+      desc: list of names
+  - gender:
+      type: Literal['M', 'F', 'U']
+      desc: one of male, female and unknown
+  - age:
+      type: int
+      desc: estimated, in years, in case birthdate is unknown
+  - birthDate:
+      type: str
+  - birthDateEstimated:
+      type: bool
+      desc: whether the birthdate is estimated
+  - birthTime:
+      type: str
+  - dead:
+      type: bool
+      desc: whether the patient is dead
+  - deathDate:
+      type: str
+  - causeOfDeath:
+      type: OpenMRS Object (concept)
+  - deathdateEstimated:
+      type: bool
+      desc: whether the date of death is estimated
+  - addresses:
+      type: list[address]
+      desc: list of addresses
+  - attributes:
+      type: list[attribute]
+      desc: list of custom-defined attributes
+  - active:
+      type: bool
+      desc: whether the person is currently in the database
+      required: True
+  - uuid:
+      type: str
+      desc: the UUID assigned to the person within the database
+user:
+  props:
+  - subresource: False
+  fields:
+  - description:
+      type: str
+      desc: description of the user
+  - username:
+      type: str
+      desc: username of the user
+      required: True
+  - password:
+      type: str
+      desc: password of the user
+      required: True
+  - person:
+      type: OpenMRS Object (person)
+      desc: an OpenMRS Person object with a minimum of 1 name and gender
+      mandatory: True
+  - systemId:
+      type: str
+      desc: unique identifier (manually) assigned to each user
+      required: True
+  - roles: 
+      type: list[OpenMRS Object (role)]
+      desc: a list of roles attributed to the user
+  - userProperties:
+      type: dict
+      desc: a set of key value pairs used to store user specific data
+  - secretQuestion:
+      type: str
+      desc: a secret question chosen by the user
+  - active:
+      type: bool
+      desc: whether the user is currently in the database
+      required: True
+  - uuid:
+      type: str
+      desc: the UUID assigned to the user within the database
+  - permanent:
+      type: bool
+      desc: whether this user can be removed from the database
