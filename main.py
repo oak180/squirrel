@@ -4,23 +4,7 @@ import requests
 import os
 import yaml
 
-
-def extract_users(output_path: str) -> tuple[int, str]:
-    output_file = Path(output_path)
-    if output_file.exists():
-        raise FileExistsError(f'{output_file.name} already exists')
-
-    users_resp = requests.get(ws_uri + '/user', auth=ws_auth)
-    if not users_resp.status_code == 200:
-        return (users_resp.status_code, users_resp.json().get('message'))
-
-    users_dir = users_resp.json()
-    user_list = [x.get('display') for x in users_dir.get('results')]
-
-    with open(output_file, 'w') as output_fp:
-        yaml.dump(users_dir, output_fp)
-
-    return (users_resp.status_code, f'Extracted: {", ".join(user_list)}')
+from src.users import extract_users, delete_user, input_user
 
 
 def input_user_dir(input_path: str) -> tuple[str, str]:
@@ -52,36 +36,26 @@ def input_user_dir(input_path: str) -> tuple[str, str]:
     return f'Added: {", ".join(added)}', f'Failed: {", ".join(failed)}'
 
 
-def input_user(user_data: dict) -> tuple[int, str]:
-    user_resp = requests.post(ws_uri + '/user', json=user_data, auth=ws_auth)
-    return user_resp
-
-
-def delete_user(target_uuid: str) -> tuple[int, str]:
-    del_resp = requests.delete(ws_uri + f'/user/{target_uuid}?purge=true', auth=ws_auth)
-    if del_resp.status_code == 200:
-        return del_resp.status_code, del_resp.json()
-    elif del_resp.status_code == 500:
-        return del_resp.status_code, del_resp.json().get('error').get('message')
-    else:
-        return del_resp.status_code, del_resp
-
-
 def main():
     print('hello from squirrel')
 
-    job = extract_users(r'./data_files/users.out.dictionary.yaml')
-    print(job)
+    payload = {
+        'username': 'zaeem',
+        'password': 'ZaeemKh1',
+        'systemId': 'zaeem.khan',
+        'person': {
+            'gender': 'M',
+            'names': [{'givenName': 'Zaeem', 'familyName': 'Khan'}],
+        },
+    }
+
+    job_res = input_user(payload)
+    print(job_res)
+
+    extract_users('remaining.users.dictionary.yaml', overwrite=True)
 
     return
 
 
 if __name__ == '__main__':
-    load_dotenv()
-
-    ws_uri = os.getenv('WS_URI')
-    ws_user = os.getenv('WS_USER')
-    ws_pass = os.getenv('WS_PASS')
-    ws_auth = (ws_user, ws_pass)
-
     main()
