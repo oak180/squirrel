@@ -1,12 +1,22 @@
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 import yaml
 
 from .env_vars import OUTPUT, TEMPLATES, DICTIONARIES, TEMPORARY
 
 
-def extract_dictionary():
-    pass
+def find_source(source_name: str, source_type: Literal['dictionary', 'template']) -> Path:
+    """Find appropriate dictionary by source_name"""
+
+    if source_type == 'dictionary':
+        resources = list(DICTIONARIES.glob(f'{source_name}.{source_type}.yaml'))
+        if len(resources) == 1: 
+            return resources[0]
+
+    elif source_type == 'template':
+        resources = list(TEMPLATES.glob(f'{source_name}.{source_type}.yaml'))
+        if len(resources) == 1: 
+            return resources[0]
 
 
 def can_write(target_path: str, overwrite: bool = False) -> Path:
@@ -27,7 +37,7 @@ def handle_write(response_data: Any, target_file: Path) -> None:
 if __name__ == '__main__':
     pass
 else:
-    OUTPUT: Path = Path('OUTPUT')
-    TEMPLATES: Path = Path('TEMPLATES')
-    DICTIONARIES: Path = Path('DICTIONARIES')
-    TEMPORARY: Path = Path('TEMPORARY')
+    OUTPUT: Path = Path(OUTPUT)
+    TEMPLATES: Path = Path(TEMPLATES)
+    DICTIONARIES: Path = Path(DICTIONARIES)
+    TEMPORARY: Path = Path(TEMPORARY)
