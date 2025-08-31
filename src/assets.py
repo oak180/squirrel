@@ -1,5 +1,5 @@
-"""Module for validating a dictionary by template"""
-# import templates and dictionaries
+"""Module for validating assets by template"""
+# import templates and assets
 # check whether mandatory/required fields exist
 
 import yaml
@@ -7,9 +7,9 @@ import yaml
 from .sys_paths import find_source
 
 
-def load_dictionary(source_name: str) -> dict:
+def load_assets(source_name: str) -> dict:
 
-    source = find_source(source_name, 'dictionary')
+    source = find_source(source_name, 'assets')
 
     with open(source, 'r') as source_fp:
         resource = yaml.safe_load(source_fp)

@@ -15,5 +15,5 @@ else:
 
     OUTPUT: str = os.getenv('OUTPUT')
     TEMPLATES: str = os.getenv('TEMPLATES')
-    DICTIONARIES: str = os.getenv('DICTIONARIES')
+    ASSETS: str = os.getenv('ASSETS')
     TEMPORARY: str = os.getenv('TEMPORARY')

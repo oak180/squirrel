@@ -2,14 +2,16 @@ from pathlib import Path
 from typing import Any, Literal
 import yaml
 
-from .env_vars import OUTPUT, TEMPLATES, DICTIONARIES, TEMPORARY
+from .env_vars import OUTPUT, TEMPLATES, ASSETS, TEMPORARY
 
 
-def find_source(source_name: str, source_type: Literal['dictionary', 'template']) -> Path:
-    """Find appropriate dictionary by source_name"""
+def find_source(source_name: str, source_type: Literal['assets', 'template']) -> Path:
+    """Find appropriate assets files by source_name"""
 
-    if source_type == 'dictionary':
-        resources = list(DICTIONARIES.glob(f'{source_name}.{source_type}.yaml'))
+    file_name = f'{source_name}.{source_type}.yaml'
+
+    if source_type == 'assets':
+        resources = list(ASSETS.glob(f'{source_name}.{source_type}.yaml'))
         if len(resources) == 1: 
             return resources[0]
 
@@ -39,5 +41,5 @@ if __name__ == '__main__':
 else:
     OUTPUT: Path = Path(OUTPUT)
     TEMPLATES: Path = Path(TEMPLATES)
-    DICTIONARIES: Path = Path(DICTIONARIES)
+    ASSETS: Path = Path(ASSETS)
     TEMPORARY: Path = Path(TEMPORARY)

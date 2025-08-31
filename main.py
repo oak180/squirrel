@@ -1,17 +1,19 @@
 from pprint import pprint
 
 from src.users import extract_users, delete_user, input_user
-from src.dictionaries import load_dictionary
+from src.assets import load_assets
 
 def main():
     print('hello from squirrel')
 
-    resources = load_dictionary('user')
+    resources = load_assets('user')
     pprint(resources)
 
+    # todo refactor: 'dictionary' -> 'asset'
+    # todo
+    #  validate loaded assets
     # continue by validating the loaded resources
-    # in src/dictionaries.py, or in src/users.py?
-    # refactoring? dictionaries vs resources (to avoid confusion)
+    # in src/assets.py, or in src/users.py?
 
     return
 

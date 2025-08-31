@@ -15,4 +15,15 @@
     },
     "ruff.nativeServer": "on",
     "ruff.format.preview": false,
+    "todo-tree.general.exportPath": "todotree-%Y-%m-%d.json",
+    "todo-tree.tree.buttons.export": true,
+    "todo-tree.general.statusBar": "tags",
+    "todo-tree.filtering.excludeGlobs": [
+        "**/node_modules/*/**",
+        "**/.venv/*/**",
+        "**/.todotree/*/**"
+    ],
+    "todo-tree.highlights.enabled": false,
+    "todo-tree.regex.regexCaseSensitive": false,
+    "todo-tree.tree.showCountsInTree": true,
 }
