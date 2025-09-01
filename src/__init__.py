@@ -1,5 +1,7 @@
 from src.sys_paths import find_source
+from src.validate import validate_asset
 
 __all__ = [
-    'find_source'
+    'find_source',
+    'validate_asset'
 ]
