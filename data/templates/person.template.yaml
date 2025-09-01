@@ -1,43 +1,43 @@
-person:
-  props:
-  - subresource: False
-  fields:
-  - names:
-      type: list[name]
-      desc: list of names
-  - gender:
-      type: Literal['M', 'F', 'U']
-      desc: one of male, female and unknown
-  - age:
-      type: int
-      desc: estimated, in years, in case birthdate is unknown
-  - birthDate:
-      type: str
-  - birthDateEstimated:
-      type: bool
-      desc: whether the birthdate is estimated
-  - birthTime:
-      type: str
-  - dead:
-      type: bool
-      desc: whether the patient is dead
-  - deathDate:
-      type: str
-  - causeOfDeath:
-      type: OpenMRS Object (concept)
-  - deathdateEstimated:
-      type: bool
-      desc: whether the date of death is estimated
-  - addresses:
-      type: list[address]
-      desc: list of addresses
-  - attributes:
-      type: list[attribute]
-      desc: list of custom-defined attributes
-  - active:
-      type: bool
-      desc: whether the person is currently in the database
-      required: True
-  - uuid:
-      type: str
-      desc: the UUID assigned to the person within the database
+props:
+- subresource: False
+fields:
+- names:
+    type: list[name]
+    desc: list of names
+- gender:
+    type: Literal['M', 'F', 'U']
+    desc: one of male, female and unknown
+- age:
+    type: int
+    desc: estimated, in years, in case birthdate is unknown
+- birthDate:
+    type: str
+    desc: in YYYY-MM-DD format
+- birthDateEstimated:
+    type: bool
+    desc: whether the birthdate is estimated
+- birthTime:
+    type: str
+- dead:
+    type: bool
+    desc: whether the patient is dead
+- deathDate:
+    type: str
+- causeOfDeath:
+    type: OpenMRS Object (concept)
+- deathdateEstimated:
+    type: bool
+    desc: whether the date of death is estimated
+- addresses:
+    type: list[address]
+    desc: list of addresses
+- attributes:
+    type: list[attribute]
+    desc: list of custom-defined attributes
+- active:
+    type: bool
+    desc: whether the person is currently in the database
+    required: True
+- uuid:
+    type: str
+    desc: the UUID assigned to the person within the database
