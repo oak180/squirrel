@@ -1,7 +1,8 @@
 from src.sys_paths import find_source
-from src.validate import validate_asset
+from src.validate import validate_asset, Template
 
 __all__ = [
     'find_source',
-    'validate_asset'
+    'validate_asset',
+    'Template'
 ]

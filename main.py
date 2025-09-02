@@ -1,7 +1,7 @@
 from pprint import pprint
 
 from src.users import extract_users, delete_user, input_user
-from src import validate_asset
+from src import validate_asset, Template
 
 from src.sys_paths import TEMPLATES
 
