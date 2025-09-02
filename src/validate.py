@@ -38,80 +38,85 @@ def load_asset() -> dict[str, Any]:
 
 
 
-class _TemplateField:
-    def __init__(self, template_field: dict) -> None:
-        self.template_field = template_field
-        self.field_name = list(self.template_field.keys())[0]
-        self.field_props = self.template_field.get(self.field_name)
-        self.field_type = self.field_props.get('type')
-        self.field_desc = self.field_props.get('desc')
-        self.is_mandatory = self.field_props.setdefault('mandatory', False)
-        self.is_required = self.field_props.setdefault('required', False)
+class _AssetTemplateField:
+    def __init__(self, name: str, props: dict) -> None:
+        self.name = name
+        self.props = props
+
+        if ('type' in self.props) and ('desc' in self.props):
+            self.type = self.props.get('type')
+            self.desc = self.props.get('desc')
+        else:
+            raise ValueError(f'type and/or desc missing in {self.name}')
+        
+        self.is_mandatory = self.props.setdefault('mandatory', False)
+        self.is_required = self.props.setdefault('required', False)
+
         return
     
     def __repr__(self) -> str:
-        s = f'{self.field_name} ({self.field_type}): {self.field_desc}'
+        s = f'{self.name} | {self.desc} | {self.type}'
 
         if self.is_mandatory:
-            s += ' (mandatory)'
+            s += ' | mandatory'.upper()
         if self.is_required:
-            s += ' (required)'
+            s += ' | required'.upper()
 
         return s
     
-    def prettify(self) -> None:
-        pprint(self.template_field)
-        return
-    
 
 
 
-class Template:
-    def __init__(self, template_dict: dict) -> None:
-        self.template_dict = template_dict
-        self.template_fields = [
-            _TemplateField(f) for f in self.template_dict.get('fields')
+class AssetTemplate:
+    def __init__(self, name: str, content: dict) -> None:
+        self.name = name
+        self.props = content.get('props')
+        self.is_subresource = self.props.get('subresource')
+
+        self.fields = [
+            _AssetTemplateField(k, v) for k, v in content.get('fields').items()
         ]
+
         return
     
     def prettify(self) -> None:
-        pprint(self.template_dict)
+        print('Template for asset:', self.name)
+        print('Is Subresource:', self.is_subresource)
+        for each_field in self.list_fields():
+            print(each_field)
         return
     
     def __repr__(self) -> str:
-        return self.template_dict
+        return self.content
 
     @classmethod
     def from_file(cls, template_path: str) -> Self:
 
         template_file: Path = Path(template_path)
 
+        if not template_file.name.endswith('.template.yaml'):
+            raise ValueError('Not a template:', template_file.as_posix())
         if not template_file.exists():
             raise ValueError('No template at', template_file.as_posix())
         
+        template_name = template_file.name.split('.', 1).pop(0)
         with open(template_file, 'r') as template_fp:
-            template = yaml.safe_load(template_fp)
+            template_dict = yaml.safe_load(template_fp)
 
-        return cls(template)
+        return cls(template_name, template_dict)
 
     def list_fields(self) -> list:
-        return self.template_fields
+        return self.fields
 
 
 
 
 def validate_asset(template_path: Path) -> None:
 
-    validator: Template = Template.from_file(template_path)
+    validator: AssetTemplate = AssetTemplate.from_file(template_path)
     asset = load_asset()
 
     validator.prettify()
-    ls_fields = validator.list_fields()
-
-    print(type(ls_fields[0]))
-
-    for each_field in ls_fields:
-        print(each_field)
     # print(asset)
 
 

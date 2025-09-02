@@ -1,41 +1,42 @@
 props:
-- subresource: False
+    subresource: False
 fields:
-- description:
-    type: str
-    desc: description of the user
-- username:
-    type: str
-    desc: username of the user
-    required: True
-- password:
-    type: str
-    desc: password of the user
-    required: True
-- person:
-    type: OpenMRS Object (person)
-    desc: an OpenMRS Person object with a minimum of 1 name and gender
-    mandatory: True
-- systemId:
-    type: str
-    desc: unique identifier (manually) assigned to each user
-    required: True
-- roles: 
-    type: list[OpenMRS Object (role)]
-    desc: a list of roles attributed to the user
-- userProperties:
-    type: dict
-    desc: a set of key value pairs used to store user specific data
-- secretQuestion:
-    type: str
-    desc: a secret question chosen by the user
-- active:
-    type: bool
-    desc: whether the user is currently in the database
-    required: True
-- uuid:
-    type: str
-    desc: the UUID assigned to the user within the database
-- permanent:
-    type: bool
-    desc: whether this user can be removed from the database
+    description:
+        type: str
+        desc: description of the user
+    username:
+        type: str
+        desc: username of the user
+        required: True
+    password:
+        type: str
+        desc: password of the user
+        required: True
+    person:
+        type: OpenMRS Object (person)
+        desc: an OpenMRS Person object with a minimum of 1 name and gender
+        mandatory: True
+        required: True
+    systemId:
+        type: str
+        desc: unique identifier (manually) assigned to each user
+        required: True
+    roles: 
+        type: list(OpenMRS Object (role))
+        desc: a list of roles attributed to the user
+    userProperties:
+        type: dict
+        desc: a set of key value pairs used to store user specific data
+    secretQuestion:
+        type: str
+        desc: a secret question chosen by the user
+    active:
+        type: bool
+        desc: whether the user is currently in the database
+        required: True
+    uuid:
+        type: str
+        desc: the UUID assigned to the user within the database
+    permanent:
+        type: bool
+        desc: whether this user can be removed from the database
