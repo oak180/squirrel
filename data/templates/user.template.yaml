@@ -8,10 +8,12 @@ fields:
         type: str
         desc: username of the user
         required: True
+        mandatory: True
     password:
         type: str
         desc: password of the user
         required: True
+        mandatory: True
     person:
         type: OpenMRS Object (person)
         desc: an OpenMRS Person object with a minimum of 1 name and gender
@@ -21,6 +23,7 @@ fields:
         type: str
         desc: unique identifier (manually) assigned to each user
         required: True
+        mandatory: True
     roles: 
         type: list(OpenMRS Object (role))
         desc: a list of roles attributed to the user

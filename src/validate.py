@@ -4,35 +4,12 @@ from pprint import pprint
 
 import yaml
 
-
-OWAIS = {
-        'username': 'owais',
-        'password': 'OwaisKh1',
-        'systemId': 'owais.khan',
-        'person': {
-            'gender': 'M',
-            'birthdate': '1993-10-07',
-            'names': [
-                {
-                    'givenName': 'Owais',
-                    'familyName': 'Khan'
-                }
-            ],
-            'addresses': [
-                {
-                    'address1': 'B-23, St. 1, KUECHS',
-                    'address2': 'Gulzar-e-Hijri Scheme 33',
-                    'cityVillage': 'Karachi',
-                    'stateProvince': 'Sindh',
-                    'country': 'Pakistan'
-                }
-            ]
-        }
-    }
+from .env_vars import TEMPLATES
 
 
 class AssetCatalog:
     def __init__(self, asset_name: str, asset_catalog: list[dict]) -> None:
+        self.asset_name = asset_name
         self.assets_list = [
             Asset(a) for a in asset_catalog
         ]
@@ -58,6 +35,19 @@ class AssetCatalog:
             catalog_dict = yaml.safe_load(catalog_fp)
 
         return cls(catalog_name, catalog_dict)
+    
+    def validate_catalog(self) -> bool:
+
+        template: AssetTemplate = AssetTemplate.from_catalog(self.asset_name)
+
+        mandatorily = template.mandatory_fields
+
+        for each in mandatorily:
+
+            if each not in template.mandatory_fields:
+                raise ValueError(f'field {each} not found')
+
+        return 0
 
 
 
@@ -69,6 +59,7 @@ class Asset:
     def prettify(self) -> None:
         pprint(self.asset_dict)
         return
+    
 
 
 class _AssetTemplateField:
@@ -97,6 +88,8 @@ class _AssetTemplateField:
 
         return s
     
+    def as_dict(self) -> dict: return {self.name: self.props}
+        
 
 class AssetTemplate:
     def __init__(self, name: str, content: dict) -> None:
@@ -110,20 +103,40 @@ class AssetTemplate:
 
         return
     
-    def prettify(self) -> None:
-        print('Template for asset:', self.name)
-        print('Is Subresource:', self.is_subresource)
-        for each_field in self.fields:
-            print(each_field)
-        return
+    def as_dict(self) -> dict:
+        
+        return {
+            self.name: {
+                'props': self.props,
+                'fields': [
+                    each.as_dict() for each in self.fields
+                ]
+            }
+        }
+    
+    def _prettify(self) -> None:
+
+        pprint(self.as_dict())
+
+        return None
     
     def __repr__(self) -> str:
         return f'{self.name} | Is subresource: {'Y' if self.is_subresource else 'N'}'
 
+    @staticmethod
+    def from_catalog(asset_name: str) -> Self:
+        
+        return AssetTemplate.from_file(
+            '/'.join([TEMPLATES, f'{asset_name}.template.yaml'])
+        )
+
     @classmethod
     def from_file(cls, template_path: str) -> Self:
 
-        template_file: Path = Path(template_path)
+        if not isinstance(template_path, Path):
+            template_file: Path = Path(template_path)
+        else:
+            template_file = template_path
 
         if not template_file.name.endswith('.template.yaml'):
             raise ValueError('Not a template:', template_file.as_posix())
@@ -136,10 +149,15 @@ class AssetTemplate:
 
         return cls(template_name, template_dict)
 
-    def list_required_fields(self) -> None:
-        for f in self.fields:
-            if f.is_required:
-                print(f.name)
+    @property
+    def required_fields(self) -> list[str]:
+
+        return [each.name for each in self.fields if each.is_required]
+    
+    @property
+    def mandatory_fields(self) -> list[str]:
+
+        return [each.name for each in self.fields if each.is_mandatory]
 
 
 def validate_asset() -> None:
@@ -152,7 +170,9 @@ def validate_asset() -> None:
         r'/home/user/Projects/squirrel/data/assets/user.catalog.yaml'
     )
 
-    catalog.prettify()
+    tmpl: AssetTemplate = AssetTemplate.from_catalog('user')
+
+    tmpl.prettify()
 
     return
 
