@@ -1,4 +1,4 @@
-props:
+properties:
     subresource: False
 fields:
     description:

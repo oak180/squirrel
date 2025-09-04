@@ -1,75 +1,10 @@
 from pathlib import Path
-from typing import Any, Self
+from typing import Self
 from pprint import pprint
 
 import yaml
 
 from .env_vars import TEMPLATES
-
-
-class AssetCatalog:
-    def __init__(self, asset_name: str, asset_catalog: list[dict]) -> None:
-        self.asset_name = asset_name
-        self.assets_list = [
-            Asset(a) for a in asset_catalog
-        ]
-        return
-    
-    def prettify(self) -> None:
-        for each in self.assets_list:
-            each.prettify()
-        return
-    
-    @classmethod
-    def from_file(cls, catalog_path: str) -> Self:
-
-        catalog_file: Path = Path(catalog_path)
-
-        if not catalog_file.name.endswith('.catalog.yaml'):
-            raise ValueError('Not a template:', catalog_file.as_posix())
-        if not catalog_file.exists():
-            raise ValueError('No template at', catalog_file.as_posix())
-        
-        catalog_name = catalog_file.name.split('.', 1).pop(0)
-        with open(catalog_file, 'r') as catalog_fp:
-            catalog_dict = yaml.safe_load(catalog_fp)
-
-        return cls(catalog_name, catalog_dict)
-    
-    def validate_catalog(self) -> None:
-
-        template: AssetTemplate = AssetTemplate.by_catalog(self.asset_name)
-        mandatory_fields = template.mandatory_fields
-
-        for each_asset in self.assets_list:
-            try:
-                each_asset.validate_fields(mandatory_fields)
-                print('validated')
-            except Exception as e:
-                print(e)
-
-        return None
-
-
-
-class Asset:
-    def __init__(self, content: dict) -> None:
-        self.content = content
-        return
-    
-    def prettify(self) -> None:
-        pprint(self.content)
-        return
-    
-    def as_dict(self) -> dict: return self.content
-
-    def validate_fields(self, mandatory_fields: list) -> None:
-        
-        for each_field in mandatory_fields:
-            if each_field not in self.content.keys():
-                raise ValueError(f'missing field: {each_field}')
-        
-        return None
 
 
 class _AssetTemplateField:
@@ -89,14 +24,17 @@ class _AssetTemplateField:
         return
     
     def __repr__(self) -> str:
-        s = f'{self.name} | {self.desc} | {self.type}'
+        return f'field({self.name})'
+    
+    # def __str__(self) -> str:
+    #     s = f'{self.name} | {self.desc} | {self.type}'
 
-        if self.is_mandatory:
-            s += ' | mandatory'.upper()
-        if self.is_required:
-            s += ' | required'.upper()
+    #     if self.is_mandatory:
+    #         s += ' | mandatory'.upper()
+    #     if self.is_required:
+    #         s += ' | required'.upper()
 
-        return s
+    #     return s
     
     def as_dict(self) -> dict: return {self.name: self.props}
         
@@ -104,8 +42,8 @@ class _AssetTemplateField:
 class AssetTemplate:
     def __init__(self, name: str, content: dict) -> None:
         self.name = name
-        self.props = content.get('props')
-        self.is_subresource = self.props.get('subresource')
+        self.properties = content.get('properties')
+        self.is_subresource = self.properties.get('subresource')
 
         self.fields = [
             _AssetTemplateField(k, v) for k, v in content.get('fields').items()
@@ -113,25 +51,27 @@ class AssetTemplate:
 
         return
     
+    def __repr__(self) -> str:
+        return f'{self.name} | Is subresource: {'Y' if self.is_subresource else 'N'}'
+
+    
     def as_dict(self) -> dict:
         
         return {
             self.name: {
-                'props': self.props,
+                'properties': self.properties,
                 'fields': [
                     each.as_dict() for each in self.fields
                 ]
             }
         }
     
-    def _prettify(self) -> None:
+    def prettify(self) -> None:
 
         pprint(self.as_dict())
 
         return None
     
-    def __repr__(self) -> str:
-        return f'{self.name} | Is subresource: {'Y' if self.is_subresource else 'N'}'
 
     @staticmethod
     def by_catalog(asset_name: str) -> Self:
