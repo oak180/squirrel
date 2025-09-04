@@ -36,30 +36,40 @@ class AssetCatalog:
 
         return cls(catalog_name, catalog_dict)
     
-    def validate_catalog(self) -> bool:
+    def validate_catalog(self) -> None:
 
-        template: AssetTemplate = AssetTemplate.from_catalog(self.asset_name)
+        template: AssetTemplate = AssetTemplate.by_catalog(self.asset_name)
+        mandatory_fields = template.mandatory_fields
 
-        mandatorily = template.mandatory_fields
+        for each_asset in self.assets_list:
+            try:
+                each_asset.validate_fields(mandatory_fields)
+                print('validated')
+            except Exception as e:
+                print(e)
 
-        for each in mandatorily:
-
-            if each not in template.mandatory_fields:
-                raise ValueError(f'field {each} not found')
-
-        return 0
+        return None
 
 
 
 class Asset:
-    def __init__(self, asset_dict: dict) -> None:
-        self.asset_dict = asset_dict
+    def __init__(self, content: dict) -> None:
+        self.content = content
         return
     
     def prettify(self) -> None:
-        pprint(self.asset_dict)
+        pprint(self.content)
         return
     
+    def as_dict(self) -> dict: return self.content
+
+    def validate_fields(self, mandatory_fields: list) -> None:
+        
+        for each_field in mandatory_fields:
+            if each_field not in self.content.keys():
+                raise ValueError(f'missing field: {each_field}')
+        
+        return None
 
 
 class _AssetTemplateField:
@@ -124,7 +134,7 @@ class AssetTemplate:
         return f'{self.name} | Is subresource: {'Y' if self.is_subresource else 'N'}'
 
     @staticmethod
-    def from_catalog(asset_name: str) -> Self:
+    def by_catalog(asset_name: str) -> Self:
         
         return AssetTemplate.from_file(
             '/'.join([TEMPLATES, f'{asset_name}.template.yaml'])
@@ -159,22 +169,6 @@ class AssetTemplate:
 
         return [each.name for each in self.fields if each.is_mandatory]
 
-
-def validate_asset() -> None:
-
-    template: AssetTemplate = AssetTemplate.from_file(
-        r'/home/user/Projects/squirrel/data/templates/user.template.yaml'
-    )
-
-    catalog: AssetCatalog = AssetCatalog.from_file(
-        r'/home/user/Projects/squirrel/data/assets/user.catalog.yaml'
-    )
-
-    tmpl: AssetTemplate = AssetTemplate.from_catalog('user')
-
-    tmpl.prettify()
-
-    return
 
 
 if __name__ == "__main__":
