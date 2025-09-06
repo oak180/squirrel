@@ -1,16 +1,21 @@
 from pprint import pprint
 
-from src import AssetCatalog
-
+from src import AbstractAssetCatalog
+from src.users import UserAssetCatalog
 
 def main():
     pprint('hello from squirrel')
 
-    cat: AssetCatalog = AssetCatalog.from_file(
+    cat: UserAssetCatalog = UserAssetCatalog.from_file(
         r'/home/user/Projects/squirrel/data/assets/user.catalog.yaml'
     )
 
-    print('Status:', cat.validate_catalog())
+    cv = cat.validate_catalog()
+
+    if cv:
+        print('cat happy =)')
+    else:
+        print('cat sad =(')
 
     # todo implement (reasonable) abstraction
     # todo 

@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Self
+from typing import Any, Self
 from pprint import pprint
 
 import yaml
@@ -24,17 +24,10 @@ class _AssetTemplateField:
         return
     
     def __repr__(self) -> str:
-        return f'field({self.name})'
+        return f'{self.__class__.__name__}({self.name}, {self.props})'
     
-    # def __str__(self) -> str:
-    #     s = f'{self.name} | {self.desc} | {self.type}'
-
-    #     if self.is_mandatory:
-    #         s += ' | mandatory'.upper()
-    #     if self.is_required:
-    #         s += ' | required'.upper()
-
-    #     return s
+    def __str__(self) -> str:
+        return f'Field: {self.name} ({self.type}) | {self.desc}'
     
     def as_dict(self) -> dict: return {self.name: self.props}
         
@@ -42,37 +35,46 @@ class _AssetTemplateField:
 class AssetTemplate:
     def __init__(self, name: str, content: dict) -> None:
         self.name = name
-        self.properties = content.get('properties')
-        self.is_subresource = self.properties.get('subresource')
+        self._properties = content.get('properties')
+        self.desc = self._properties.get('desc')
+        self.is_subresource = self._properties.get('subresource')
 
-        self.fields = [
+        self._fields = [
             _AssetTemplateField(k, v) for k, v in content.get('fields').items()
         ]
 
         return
     
     def __repr__(self) -> str:
-        return f'{self.name} | Is subresource: {'Y' if self.is_subresource else 'N'}'
-
+        return f'{self.__class__.__name__}({self.name}, {self.properties})'
     
+    def __str__(self) -> str: 
+        return f'{self.name} | {self.desc}'
+
+    @property
+    def properties(self) -> dict[str, str | Any]:
+        return self._properties
+    
+    @property
+    def fields(self) -> dict[str, str | Any]:
+        return {f.name:f.props for f in self._fields}
+    
+    @property
+    def required_fields(self) -> dict[str, str | Any]:
+        return {f.name:f.props for f in self._fields if f.is_required}
+    
+    @property
+    def mandatory_fields(self) -> dict[str, str | Any]:
+        return {f.name:f.props for f in self._fields if f.is_mandatory}
+
     def as_dict(self) -> dict:
-        
         return {
             self.name: {
                 'properties': self.properties,
-                'fields': [
-                    each.as_dict() for each in self.fields
-                ]
+                'fields': self.fields
             }
         }
     
-    def prettify(self) -> None:
-
-        pprint(self.as_dict())
-
-        return None
-    
-
     @staticmethod
     def by_catalog(asset_name: str) -> Self:
         
@@ -99,15 +101,6 @@ class AssetTemplate:
 
         return cls(template_name, template_dict)
 
-    @property
-    def required_fields(self) -> list[str]:
-
-        return [each.name for each in self.fields if each.is_required]
-    
-    @property
-    def mandatory_fields(self) -> list[str]:
-
-        return [each.name for each in self.fields if each.is_mandatory]
 
 
 

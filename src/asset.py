@@ -1,28 +1,62 @@
 from pprint import pprint
 from pathlib import Path
-from typing import Self
+from typing import Self, Any
+from abc import ABC, abstractmethod
 
 import yaml
 
 from .validate import AssetTemplate
 
 
-class AssetCatalog:
-    def __init__(self, asset_name: str, asset_catalog: list[dict]) -> None:
-        self.asset_name = asset_name
-        self.assets_list = [
-            Asset(a) for a in asset_catalog
-        ]
+class MissingAssetFieldError(ValueError):
+    pass
+
+
+class AbstractAsset(ABC):
+    def __init__(self, content: dict[str, str | Any]) -> None:
+        self.content = content
         return
 
-    def prettify(self) -> None:
-        for each in self.assets_list:
-            each.prettify()
+    @property
+    @abstractmethod
+    def catalog_id(self) -> str:
+        pass
+
+    def as_dict(self) -> dict:
+        return self.content
+
+    def validate_fields(self, mandatory_fields: list) -> bool:
+        for each_field in mandatory_fields:
+            if each_field not in self.content.keys():
+                raise MissingAssetFieldError(f'{each_field} missing')
+
+        return True
+
+
+class AbstractAssetCatalog(ABC):
+    def __init__(self, asset_name: str, asset_catalog: dict[str, str | Any]) -> None:
+        self.asset_name = asset_name
+        self._asset_catalog = asset_catalog
         return
+
+    def __repr__(self) -> str:
+        return f'{self.__class__.__name__}({self.asset_name}, {self.asset_catalog})'
+
+    def __str__(self) -> str:
+        return f'{self.asset_name}\n' + '\n'.join(
+            [name for name in self.asset_catalog.keys()]
+        )
+
+    @property
+    @abstractmethod
+    def asset_catalog(self) -> dict[str, AbstractAsset]:
+        pass
+
+    def as_dict(self) -> dict[str, str | Any]:
+        return {self.asset_name: self.asset_catalog}
 
     @classmethod
     def from_file(cls, catalog_path: str) -> Self:
-
         catalog_file: Path = Path(catalog_path)
 
         if not catalog_file.name.endswith('.catalog.yaml'):
@@ -36,40 +70,28 @@ class AssetCatalog:
 
         return cls(catalog_name, catalog_dict)
 
-    def validate_catalog(self) -> None:
+    def validate_catalog(self) -> bool:
+        rt = True
 
         template: AssetTemplate = AssetTemplate.by_catalog(self.asset_name)
         mandatory_fields = template.mandatory_fields
 
-        for each_asset in self.assets_list:
+        print(f'Validating {self.asset_name} catalog...')
+
+        for id, asset in self.asset_catalog.items():
+            print(f'Validating {id}...', end=' ')
+
             try:
-                each_asset.validate_fields(mandatory_fields)
-                print('validated')
-            except Exception as e:
-                print(e)
+                asset.validate_fields(mandatory_fields)
+                print('Passed')
+            except MissingAssetFieldError as maferr:
+                print('Failed:', maferr)
+                rt = False
 
-        return None
-
-
-class Asset:
-    def __init__(self, content: dict) -> None:
-        self.content = content
-        return
-
-    def prettify(self) -> None:
-        pprint(self.content)
-        return
-
-    def as_dict(self) -> dict: return self.content
-
-    def validate_fields(self, mandatory_fields: list) -> None:
-
-        for each_field in mandatory_fields:
-            if each_field not in self.content.keys():
-                raise ValueError(f'missing field: {each_field}')
-
-        return None
+        print('Catalog valid:', rt)
+        
+        return rt
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     pass

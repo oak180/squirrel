@@ -1,5 +1,6 @@
 properties:
     subresource: False
+    desc: any person who uses the system, or an agent thereof
 fields:
     description:
         type: str
