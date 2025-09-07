@@ -1,4 +1,3 @@
-from pprint import pprint
 from pathlib import Path
 from typing import Self, Any
 from abc import ABC, abstractmethod
@@ -13,19 +12,55 @@ class MissingAssetFieldError(ValueError):
 
 
 class AbstractAsset(ABC):
+    """
+    Represents a generic asset entry
+    in a generic asset catalog
+
+    Attributes:
+        `content`: the keys specified in the OpenMRS WS API
+        docs and their appropriate values
+    """
+
     def __init__(self, content: dict[str, str | Any]) -> None:
         self.content = content
         return
 
+    def __repr__(self) -> str:
+        return f'{self.__class__.__name__}({self.content})'
+
+    def __str__(self) -> str:
+        return f'{self.catalog_id}'
+
     @property
-    @abstractmethod
+    def asset_uuid(self) -> str:
+        return self.content.get('uuid')
+
+    @property
+    def display_id(self) -> str | None:
+        return self.content.get('display') or None
+
+    @property
     def catalog_id(self) -> str:
-        pass
+        """
+        The Catalog ID for the asset
+        """
+        return self.display_id if self.display_id else self.asset_uuid
 
     def as_dict(self) -> dict:
         return self.content
 
     def validate_fields(self, mandatory_fields: list) -> bool:
+        """
+        Checks whether all `mandatory_fields` are
+        present in `self.content`
+        
+        Returns:
+            `true` if successful
+        
+        Raises:
+            `MissingAssetFieldError` if a field \
+            is found to be missing
+        """
         for each_field in mandatory_fields:
             if each_field not in self.content.keys():
                 raise MissingAssetFieldError(f'{each_field} missing')
@@ -34,29 +69,51 @@ class AbstractAsset(ABC):
 
 
 class AbstractAssetCatalog(ABC):
+    """
+    Represents a generic asset catalog
+
+    Attributes:
+        `asset_name`: as referred to in the OpenMRS WS API docs
+        `asset_catalog`: a dictionary of Catalog ID and asset attributes
+    """
+
     def __init__(self, asset_name: str, asset_catalog: dict[str, str | Any]) -> None:
         self.asset_name = asset_name
         self._asset_catalog = asset_catalog
         return
 
     def __repr__(self) -> str:
-        return f'{self.__class__.__name__}({self.asset_name}, {self.asset_catalog})'
+        return f'{self.__class__.__name__}({self.asset_name}, list[{self.asset_catalog[0].__class__.__name__}])'
 
     def __str__(self) -> str:
-        return f'{self.asset_name}\n' + '\n'.join(
-            [name for name in self.asset_catalog.keys()]
+        return f'{self.asset_name}: ' + ', '.join(
+            [a.catalog_id for a in self.asset_catalog]
         )
 
     @property
     @abstractmethod
-    def asset_catalog(self) -> dict[str, AbstractAsset]:
-        pass
+    def asset_catalog(self) -> list[AbstractAsset]:
+        """
+        Instantiates a dictionary of Catalog IDs and `Asset`(s)
+        from the catalog
+        """
+        return [AbstractAsset(a) for a in self._asset_catalog.values()]
 
     def as_dict(self) -> dict[str, str | Any]:
-        return {self.asset_name: self.asset_catalog}
+        return {
+            self.asset_name: {a.catalog_id: a.as_dict() for a in self.asset_catalog}
+        }
 
     @classmethod
     def from_file(cls, catalog_path: str) -> Self:
+        """
+        Instantiates an Asset Catalog from file
+        
+        Arguments:
+            `catalog_path`: the path to a \
+            `name.catalog.yaml` file where the `name` \
+            matches the `asset_name`
+        """
         catalog_file: Path = Path(catalog_path)
 
         if not catalog_file.name.endswith('.catalog.yaml'):
@@ -89,7 +146,7 @@ class AbstractAssetCatalog(ABC):
                 rt = False
 
         print('Catalog valid:', rt)
-        
+
         return rt
 
 

@@ -1,4 +1,4 @@
-from typing import Any, Self
+from typing import Any
 
 import requests
 
@@ -6,7 +6,12 @@ from .env_vars import WS_URI, WS_AUTH
 from .sys_paths import handle_write, can_write
 from .asset import AbstractAsset, AbstractAssetCatalog
 
+
 class UserAsset(AbstractAsset):
+    """
+    Inherits from `AbstractAsset` and adds
+    further functionality to manage users in OpenMRS
+    """
     def __init__(self, content: dict[str, str | Any]) -> None:
         super().__init__(content)
         return
@@ -14,19 +19,25 @@ class UserAsset(AbstractAsset):
     @property
     def catalog_id(self) -> str:
         return self.content.get('systemId')
-    
 
 class UserAssetCatalog(AbstractAssetCatalog):
     def __init__(self, asset_name, asset_catalog) -> None:
         super().__init__(asset_name, asset_catalog)
 
     @property
-    def asset_catalog(self) -> dict[str, UserAsset]:
-        return {
-            k:UserAsset(v)
-            for k, v
-            in self._asset_catalog.items()
-        }
+    def asset_catalog(self) -> list[UserAsset]:
+        return [UserAsset(a) for a in self._asset_catalog.values()]
+
+    @staticmethod
+    def fetch_users() -> requests.Response:
+        """
+        Successful status code is 200
+        """
+        return requests.get(WS_URI + '/user/82f18b44-6814-11e8-923f-e9a88dcb533f', auth = WS_AUTH)
+
+"""
+Functions to be implemented as methods
+"""
 
 def extract_users(target_path: str, overwrite: bool = False) -> None:
     target_file = can_write(target_path, overwrite=overwrite)
