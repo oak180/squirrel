@@ -1,17 +1,28 @@
 from pprint import pprint
 
-from src.users import extract_users, delete_user, input_user
-from src.assets import load_assets
+from src import AbstractAssetCatalog
+from src.users import UserAssetCatalog
+
+CATALOG = r'/home/user/Projects/squirrel/data/assets/user.catalog.yaml'
 
 def main():
-    print('hello from squirrel')
+    pprint('hello from squirrel')
 
-    resources = load_assets('user')
-    pprint(resources)
+    cat = UserAssetCatalog.from_file(CATALOG)
+    print(cat)
+    print(f'{repr(cat)=}')
 
-    # todo refactor: 'dictionary' -> 'asset'
-    # todo
-    #  validate loaded assets
+    print(', '.join([str(a) for a in cat.asset_catalog]))
+
+    # r = UserAssetCatalog.fetch_users()
+
+    # pprint(r.status_code)
+    # pprint(r.headers)
+    # pprint(r.json())
+
+    # todo implement (reasonable) abstraction
+    # todo 
+    # todo write unit tests
     # continue by validating the loaded resources
     # in src/assets.py, or in src/users.py?
 
