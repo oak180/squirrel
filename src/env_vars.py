@@ -1,5 +1,24 @@
 from dotenv import load_dotenv
 import os
+import requests
+
+
+class GetRequest:
+    """
+    Represents a GET Request to the OpenMRS WS API
+    
+    Attributes:
+        `endpoint`: The endpoint of the URL (e.g., `/user` in `WS_URI+'/user'`)
+    """
+    
+    def __init__(self, endpoint: str) -> None:
+        self.uri = WS_URI + endpoint
+        self.auth = WS_AUTH
+        return None
+    
+    @property
+    def response(self):
+        pass
 
 
 if __name__ == '__main__':
