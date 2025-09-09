@@ -2,6 +2,7 @@ __pycache__
 .env
 *.csv
 
+data/templates
 data/tmp
 data/output
 data/assets
