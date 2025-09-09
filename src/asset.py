@@ -1,10 +1,12 @@
 from pathlib import Path
-from typing import Self, Any
+from typing import Self, Any, Literal
 from abc import ABC, abstractmethod
 
 import yaml
+import csv
+import requests
 
-from .validate import AssetTemplate
+from .env_vars import ASSETS, WS_URI, WS_AUTH
 
 
 class MissingAssetFieldError(ValueError):
@@ -14,11 +16,20 @@ class MissingAssetFieldError(ValueError):
 class AbstractAsset(ABC):
     """
     Represents a generic asset entry
-    in a generic asset catalog
+
+    Arguments:
+        `content`:
+            the keys specified in the OpenMRS WS API docs and
+            their appropriate values
 
     Attributes:
-        `content`: the keys specified in the OpenMRS WS API
-        docs and their appropriate values
+        `catalog_id`:
+            the index in the asset catalog
+
+    Methods:
+        `as_dict`:
+            returns a dictionary of key-value pairs as per
+            OpenMRS WS API docs
     """
 
     def __init__(self, content: dict[str, str | Any]) -> None:
@@ -32,19 +43,12 @@ class AbstractAsset(ABC):
         return f'{self.catalog_id}'
 
     @property
-    def asset_uuid(self) -> str:
-        return self.content.get('uuid')
-
-    @property
-    def display_id(self) -> str | None:
-        return self.content.get('display') or None
-
-    @property
+    @abstractmethod
     def catalog_id(self) -> str:
-        """
-        The Catalog ID for the asset
-        """
-        return self.display_id if self.display_id else self.asset_uuid
+        if id := self.content.get('display'):
+            return id
+        else:
+            return self.content.get('uuid')
 
     def as_dict(self) -> dict:
         return self.content
@@ -53,13 +57,14 @@ class AbstractAsset(ABC):
         """
         Checks whether all `mandatory_fields` are
         present in `self.content`
-        
+
         Returns:
-            `true` if successful
-        
+            `true`:
+                if successful
+
         Raises:
-            `MissingAssetFieldError` if a field \
-            is found to be missing
+            `MissingAssetFieldError`:
+                if a field is found to be missing
         """
         for each_field in mandatory_fields:
             if each_field not in self.content.keys():
@@ -70,84 +75,193 @@ class AbstractAsset(ABC):
 
 class AbstractAssetCatalog(ABC):
     """
-    Represents a generic asset catalog
+    Represents an asset catalog
 
-    Attributes:
-        `asset_name`: as referred to in the OpenMRS WS API docs
-        `asset_catalog`: a dictionary of Catalog ID and asset attributes
+    Arguments:
+        `catalog_name`:
+            as referred to in the OpenMRS WS API docs (e.g., "user")
+        `asset_catalog`:
+            a dictionary of Catalog ID and asset content
+
+    Methods:
+        `asset_catalog`:
+            Returns the catalog IDs of assets within this catalog
+        `as_dict`:
+            returns a dictionary of catalog IDs and content of assets
+        `from_file`:
+            constructs an asset catalog from YAML file
+        `to_file`:
+            exports the catalog to `ASSETS/catalog_name.catalog.yaml`
     """
 
-    def __init__(self, asset_name: str, asset_catalog: dict[str, str | Any]) -> None:
-        self.asset_name = asset_name
-        self._asset_catalog = asset_catalog
+    def __init__(self, catalog_name: str, asset_catalog: dict[str, str | Any]) -> None:
+        self.catalog_name = catalog_name
+        self._post_init(asset_catalog)
         return
 
+    @abstractmethod
+    def _post_init(self, asset_catalog: dict[str, str | Any]) -> None:
+        self._asset_catalog = [
+            AbstractAsset(a) for a in asset_catalog.values()
+        ]
+
     def __repr__(self) -> str:
-        return f'{self.__class__.__name__}({self.asset_name}, list[{self.asset_catalog[0].__class__.__name__}])'
+        return f'{self.__class__.__name__}({self.catalog_name}, list[{self.asset_catalog[0].__class__.__name__}])'
 
     def __str__(self) -> str:
-        return f'{self.asset_name}: ' + ', '.join(
-            [a.catalog_id for a in self.asset_catalog]
-        )
+        return f'{self.catalog_name}: {self.asset_catalog}'
 
     @property
-    @abstractmethod
     def asset_catalog(self) -> list[AbstractAsset]:
-        """
-        Instantiates a dictionary of Catalog IDs and `Asset`(s)
-        from the catalog
-        """
-        return [AbstractAsset(a) for a in self._asset_catalog.values()]
+        return [str(a) for a in self._asset_catalog]
 
     def as_dict(self) -> dict[str, str | Any]:
         return {
-            self.asset_name: {a.catalog_id: a.as_dict() for a in self.asset_catalog}
+            a.catalog_id: a.as_dict() for a in self._asset_catalog
         }
 
     @classmethod
-    def from_file(cls, catalog_path: str) -> Self:
+    def from_file(cls, catalog_name: str, catalog_path: str | None = None) -> Self:
         """
         Instantiates an Asset Catalog from file
-        
+
         Arguments:
-            `catalog_path`: the path to a \
-            `name.catalog.yaml` file where the `name` \
-            matches the `asset_name`
+            `catalog_name`:
+                the type of the resource within the catalog, like `user`
+            `catalog_path`:
+                the path to a `*.catalog.yaml` file
+
+        If only `catalog_name` is given, the AssetCatalog is instantiated
+        from `ASSETS/catalog_name.catalog.yaml`, and the validation is as
+        per `TEMPLATES/catalog_name.template.yaml`.
+
+        If both `catalog_name` and `catalog_path` are given, the AssetCatalog is
+        instantiated from `catalog_path`, and the validation is as per
+        `TEMPLATES/catalog_name.template.yaml`.
         """
-        catalog_file: Path = Path(catalog_path)
 
-        if not catalog_file.name.endswith('.catalog.yaml'):
-            raise ValueError('Not a template:', catalog_file.as_posix())
+        if not catalog_path:
+            catalog_path = '/'.join([ASSETS, f'{catalog_name}.catalog.yaml'])
+        elif not catalog_path.endswith('.catalog.yaml'):
+            raise ValueError('Not a catalog:', catalog_path)
+
+        catalog_file = Path(catalog_path)
+
         if not catalog_file.exists():
-            raise ValueError('No template at', catalog_file.as_posix())
+            raise ValueError('No catalog at:', catalog_file.as_posix())
 
-        catalog_name = catalog_file.name.split('.', 1).pop(0)
         with open(catalog_file, 'r') as catalog_fp:
             catalog_dict = yaml.safe_load(catalog_fp)
 
         return cls(catalog_name, catalog_dict)
+    
+    @classmethod
+    @abstractmethod
+    def _nester(cls, asset_content: dict[str, str | Any]) -> dict [str, str | Any]:
+        return asset_content
+    
+    @classmethod
+    def from_csv(cls, catalog_name: str, key_col: str, catalog_path: str | None = None) -> Self:
+        
+        if not catalog_path:
+            catalog_path = '/'.join([ASSETS, f'{catalog_name}.catalog.csv'])
+        elif not catalog_path.endswith('.catalog.csv'):
+            raise ValueError('Not a catalog:', catalog_path)
+        
+        catalog_file = Path(catalog_path)
 
-    def validate_catalog(self) -> bool:
-        rt = True
+        if not catalog_file.exists():
+            raise ValueError('No catalog at:', catalog_path)
+        
+        catalog_dict = {}
+        
+        with open(catalog_file, 'r') as catalog_fp:
+            reader = csv.DictReader(catalog_fp)
+            for row in reader:
+                key = row[key_col]
+                catalog_dict[key] = cls._nester(row)
 
-        template: AssetTemplate = AssetTemplate.by_catalog(self.asset_name)
-        mandatory_fields = template.mandatory_fields
+        return cls(catalog_name, catalog_dict)
+    
+    @classmethod
+    def fetch_resources(
+        cls,
+        endpoint: str,
+        uuid: str | None = None,
+        delete: False | Literal['retire', 'purge'] = False
+    ) -> Any:
 
-        print(f'Validating {self.asset_name} catalog...')
+        scheme = WS_URI + f'/{endpoint}'
 
-        for id, asset in self.asset_catalog.items():
-            print(f'Validating {id}...', end=' ')
+        if uuid:
+            scheme += f'/{uuid}'
 
-            try:
-                asset.validate_fields(mandatory_fields)
-                print('Passed')
-            except MissingAssetFieldError as maferr:
-                print('Failed:', maferr)
-                rt = False
+        if delete:
+            if not uuid:
+                raise ValueError('No UUID to delete')
+            if delete == 'purge':
+                scheme += '?purge=true'
+            if delete not in ['retire', 'purge']:
+                raise ValueError('Invalid delete mode')
+            
+            r = requests.delete(scheme, auth = WS_AUTH)
 
-        print('Catalog valid:', rt)
+            if r.status_code == 204:
+                return f'{r.status_code}: {delete.upper()} deletion successful'
 
-        return rt
+        else:
+            r = requests.get(scheme , auth = WS_AUTH)
+
+            if r.status_code == 200:
+                print(f'{r.status_code}: Fetch successful')
+                return r.json()
+
+        print('Status code:', r.status_code)
+
+        if (msg := r.json().get('error').get('message')):
+            return f'{r.status_code}: {msg}'
+        else:
+            return r
+            
+        # RESPONSE CODES
+        # 200: GET worked
+        # 204: DELETE worked
+            # if '?purge=true' is not appended, the resource is just voided (Retired = true)
+        # 401: Unauthorized
+        # 404: Not found
+
+    @classmethod
+    def purge_all_resources(cls, endpoint: str) -> Any:
+        raise NotImplementedError('thinking about it')
+
+    @abstractmethod
+    def load_resources(self, endpoint: str) -> Any:
+        
+        scheme = WS_URI + f'/{endpoint}'
+        resps = {}
+
+        for a in self._asset_catalog:
+            r = requests.post(scheme, json=a.as_dict(), auth=WS_AUTH)
+            resps[a.catalog_id] = r
+
+        return resps
+
+
+
+
+    def to_file(self, catalog_path: str = None) -> None:
+        
+        if not catalog_path:
+            catalog_path = '/'.join(
+                [ASSETS, f'{self.catalog_name}.catalog.yaml']
+            )
+        elif not catalog_path.endswith('.catalog.yaml'):
+            raise ValueError('Not a catalog:', catalog_path)
+        
+        with open(catalog_path, 'w') as catalog_fp:
+            yaml.dump(self.as_dict(), catalog_fp)
+
+        return None
 
 
 if __name__ == '__main__':

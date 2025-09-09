@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Self
 
 import requests
 
@@ -8,32 +8,54 @@ from .asset import AbstractAsset, AbstractAssetCatalog
 
 
 class UserAsset(AbstractAsset):
-    """
-    Inherits from `AbstractAsset` and adds
-    further functionality to manage users in OpenMRS
-    """
-    def __init__(self, content: dict[str, str | Any]) -> None:
+    def __init__(self, content):
         super().__init__(content)
         return
-
+    
     @property
     def catalog_id(self) -> str:
         return self.content.get('systemId')
-
+    
+    
 class UserAssetCatalog(AbstractAssetCatalog):
-    def __init__(self, asset_name, asset_catalog) -> None:
-        super().__init__(asset_name, asset_catalog)
+    def __init__(self, catalog_name, asset_catalog):
+        super().__init__(catalog_name, asset_catalog)
+        return
+    
+    def _post_init(self, asset_catalog):
+        self._asset_catalog = [
+            UserAsset(a) for a in asset_catalog.values()
+        ]
+        return
 
-    @property
-    def asset_catalog(self) -> list[UserAsset]:
-        return [UserAsset(a) for a in self._asset_catalog.values()]
+    @classmethod
+    def _nester(cls, asset_content: dict[str, str | Any]) -> dict[str, str | Any]:
 
-    @staticmethod
-    def fetch_users() -> requests.Response:
-        """
-        Successful status code is 200
-        """
-        return requests.get(WS_URI + '/user/82f18b44-6814-11e8-923f-e9a88dcb533f', auth = WS_AUTH)
+        return {
+            'username': asset_content.get('username'),
+            'password': asset_content.get('password'),
+            'systemId': asset_content.get('systemId'),
+            'person': {
+                'gender': asset_content.get('gender'),
+                'names': [
+                    {
+                        'givenName': asset_content.get('givenName'),
+                        'familyName': asset_content.get('familyName')
+                    }
+                ]
+            }
+        }
+    
+    @classmethod
+    def from_csv(cls, catalog_name = 'user', key_col = 'systemId', catalog_path = None):
+        return super().from_csv(catalog_name, key_col, catalog_path)
+    
+    @classmethod
+    def fetch_resources(cls, endpoint = 'user', uuid = None, purge = False):
+        return super().fetch_resources(endpoint, uuid, purge)
+    
+    def load_resources(self, endpoint = 'user'):
+        return super().load_resources(endpoint)
 
 """
 Functions to be implemented as methods
