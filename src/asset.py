@@ -7,7 +7,7 @@ import csv
 import requests
 
 from .env_vars import ASSETS, WS_URI, WS_AUTH
-
+from .ws import WSResponseHandler
 
 class MissingAssetFieldError(ValueError):
     pass
@@ -19,7 +19,7 @@ class AbstractAsset(ABC):
 
     Arguments:
         `content`:
-            the keys specified in the OpenMRS WS API docs and
+            the keys specified in the OpenMRS docs and
             their appropriate values
 
     Attributes:
@@ -132,13 +132,15 @@ class AbstractAssetCatalog(ABC):
                 the path to a `*.catalog.yaml` file
 
         If only `catalog_name` is given, the AssetCatalog is instantiated
-        from `ASSETS/catalog_name.catalog.yaml`, and the validation is as
-        per `TEMPLATES/catalog_name.template.yaml`.
+        from `ASSETS/catalog_name.catalog.yaml`.
 
         If both `catalog_name` and `catalog_path` are given, the AssetCatalog is
-        instantiated from `catalog_path`, and the validation is as per
-        `TEMPLATES/catalog_name.template.yaml`.
+        instantiated from `catalog_path`
         """
+
+        # removed this from the docstring as 
+        # we're ignoring templates for a while
+        # " and the validation is as per `TEMPLATES/catalog_name.template.yaml`"
 
         if not catalog_path:
             catalog_path = '/'.join([ASSETS, f'{catalog_name}.catalog.yaml'])
@@ -206,23 +208,14 @@ class AbstractAssetCatalog(ABC):
             
             r = requests.delete(scheme, auth = WS_AUTH)
 
-            if r.status_code == 204:
-                return f'{r.status_code}: {delete.upper()} deletion successful'
-
         else:
             r = requests.get(scheme , auth = WS_AUTH)
+        
+        response = WSResponseHandler(r)
+        response.write_data()
 
-            if r.status_code == 200:
-                print(f'{r.status_code}: Fetch successful')
-                return r.json()
-
-        print('Status code:', r.status_code)
-
-        if (msg := r.json().get('error').get('message')):
-            return f'{r.status_code}: {msg}'
-        else:
-            return r
-            
+        return
+        
         # RESPONSE CODES
         # 200: GET worked
         # 204: DELETE worked
@@ -235,16 +228,16 @@ class AbstractAssetCatalog(ABC):
         raise NotImplementedError('thinking about it')
 
     @abstractmethod
-    def load_resources(self, endpoint: str) -> Any:
+    def load_resources(self, endpoint: str) -> dict:
         
         scheme = WS_URI + f'/{endpoint}'
-        resps = {}
+        responses = []
 
         for a in self._asset_catalog:
             r = requests.post(scheme, json=a.as_dict(), auth=WS_AUTH)
-            resps[a.catalog_id] = r
+            responses.append(WSResponseHandler(r))
 
-        return resps
+        return responses
 
 
 

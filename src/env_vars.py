@@ -35,4 +35,5 @@ else:
     OUTPUT: str = os.getenv('OUTPUT')
     TEMPLATES: str = os.getenv('TEMPLATES')
     ASSETS: str = os.getenv('ASSETS')
+    LOGS: str = os.getenv('LOGS')
     TEMPORARY: str = os.getenv('TEMPORARY')
