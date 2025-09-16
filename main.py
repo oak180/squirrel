@@ -5,28 +5,20 @@ import requests
 import yaml
 
 from src.env_vars import WS_URI, WS_AUTH, ASSETS, OUTPUT, LOGS
-from src.users import UserAssetCatalog
+from src.users import UserAsset
 from src.ws import WSResponseHandler
+from src.catalog import AssetCatalog
 
 WRITE_PATH = r'/home/user/Projects/squirrel/data/assets/fetched.catalog.yaml'
 
 def main():
     pprint('hello from squirrel')
 
+    users: AssetCatalog = AssetCatalog.from_fetch(UserAsset)
     
-
-    users = UserAssetCatalog.from_file('user')
-
-    user_load: list[WSResponseHandler] = users.load_resources()
-
-    stdout = [each.data for each in user_load]
-
-    with open(f'{OUTPUT}/user_load.yaml', 'w') as fp:
-        yaml.dump(stdout, fp)
+    users.to_csv('user')
     
-    # todo implement (reasonable) abstraction
-    # todo 
-    # todo write unit tests
+    # FIXME Catalog.from_fetch
     # continue by validating the loaded resources
     # in src/assets.py, or in src/users.py?
 
