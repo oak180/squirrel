@@ -1,77 +1,55 @@
-from typing import Any
+from typing import Any, Self
 
 import requests
+import logging
 
 from .env_vars import WS_URI, WS_AUTH
 from .sys_paths import handle_write, can_write
-from .asset import AbstractAsset, AbstractAssetCatalog
+from .catalog import AbstractAsset, AssetCatalog
 
 
 class UserAsset(AbstractAsset):
-    """
-    Inherits from `AbstractAsset` and adds
-    further functionality to manage users in OpenMRS
-    """
-    def __init__(self, content: dict[str, str | Any]) -> None:
+    def __init__(self, content):
         super().__init__(content)
         return
-
+    
     @property
     def catalog_id(self) -> str:
         return self.content.get('systemId')
-
-class UserAssetCatalog(AbstractAssetCatalog):
-    def __init__(self, asset_name, asset_catalog) -> None:
-        super().__init__(asset_name, asset_catalog)
-
+    
     @property
-    def asset_catalog(self) -> list[UserAsset]:
-        return [UserAsset(a) for a in self._asset_catalog.values()]
+    def nester(self) -> dict[str, Any]:
+        d = {
+            'username': self.content.get('username'),
+            'systemId': self.content.get('systemId'),
+            'person': {
+                'gender': self.content.get('gender'),
+                'names': [
+                    {
+                        'givenName': self.content.get('givenName'),
+                        'familyName': self.content.get('familyName')
+                    }
+                ]
+            }
+        }
 
-    @staticmethod
-    def fetch_users() -> requests.Response:
-        """
-        Successful status code is 200
-        """
-        return requests.get(WS_URI + '/user/82f18b44-6814-11e8-923f-e9a88dcb533f', auth = WS_AUTH)
-
-"""
-Functions to be implemented as methods
-"""
-
-def extract_users(target_path: str, overwrite: bool = False) -> None:
-    target_file = can_write(target_path, overwrite=overwrite)
-
-    pull_resp = requests.get(WS_URI + '/user', auth=WS_AUTH)
-    if not pull_resp.status_code == 200:
-        raise requests.ConnectionError(
-            f'Status Code {pull_resp.status_code}: {pull_resp.json()}'
-        )
-
-    try:
-        handle_write(pull_resp.json(), target_file)
-        print(f'Wrote users to {target_file.name}')
-    except Exception as e:
-        print(f'Write failed: {e}')
-
-    return None
+        pw = input(f'Password for {d.get('systemId')}')
+        if len(pw) < 8:
+            raise ValueError('Password must be 8 or more characters')
+        else:
+            d['password'] = pw
+            return d
 
 
-def delete_user(target_uuid: str) -> None:
-    del_resp = requests.delete(WS_URI + f'/user/{target_uuid}?purge=true', auth=WS_AUTH)
-    if not del_resp.status_code == 204:
-        raise requests.ConnectionError(f'{del_resp.status_code}: {del_resp.json()}')
-
-    return None
-
-
-def input_user(user_data: dict) -> str:
-    user_resp = requests.post(WS_URI + '/user', json=user_data, auth=WS_AUTH)
-    if not user_resp.status_code == 201:
-        return f'Input User failed: {user_resp.json().get("error").get("message")}'
-
-    return f'Input User successful: {user_resp.json().get("systemId")}'
-
+    
+    @property
+    def endpoint(self) -> str:
+        return 'user'
+    
+    def fieldnames(self) -> list[str]:
+        return ['username', 'systemId', 'givenName', 'familyName', 'gender']
+    
+    
 
 if __name__ == '__main__':
     pass
