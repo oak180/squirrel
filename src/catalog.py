@@ -35,9 +35,9 @@ class AbstractAsset(ABC):
         """The mapping as per WS API docs for this asset"""
         raise NotImplementedError
 
-    @property
+    @classmethod
     @abstractmethod
-    def endpoint(self) -> str:
+    def endpoint(cls) -> str:
         """The endpoint as per WS API docs"""
         raise NotImplementedError
 
@@ -46,8 +46,9 @@ class AbstractAsset(ABC):
         """The auto-generated UUID (if updated)"""
         return self.content.get('uuid', None)
     
+    @classmethod
     @abstractmethod
-    def fieldnames(self) -> list[str]:
+    def fieldnames(cls) -> list[str]:
         """The fieldnames to write as rows"""
         raise NotImplementedError
 
@@ -59,9 +60,10 @@ class AbstractAsset(ABC):
     @classmethod
     def fetch_resource(cls, uuid: str) -> Self:
         
-        scheme = f'{WS_URI}/{cls.endpoint}/{uuid}'
+        scheme = f'{WS_URI}/{cls.endpoint()}/{uuid}'
         response = requests.get(scheme, auth=WS_AUTH)
-        content = WSResponseHandler(response, output=False).content
+        handler = WSResponseHandler(response, output=True) # TODO fetch_resource: set output to False
+        content = handler.content
         flat_content = cls.flattener(content)
 
         return cls(flat_content)
@@ -103,10 +105,11 @@ class AssetCatalog:
     @classmethod
     def from_fetch(cls, asset_class: Type[AbstractAsset]) -> Self:
 
-        scheme = f'{WS_URI}/{asset_class.endpoint}'
+        scheme = f'{WS_URI}/{asset_class.endpoint()}'
         response = requests.get(scheme, auth=WS_AUTH)
-        results = WSResponseHandler(response).content.get('results')
-        uuids = [each.content.get('uuid') for each in results]
+        handler = WSResponseHandler(response)
+        results = handler.content.get('results')
+        uuids = [each.get('uuid') for each in results]
         assets = [asset_class.fetch_resource(u) for u in uuids]
         
         return cls(assets)
@@ -145,8 +148,8 @@ class AssetCatalog:
         scheme = f'{WS_URI}/{self.catalog_name}'
 
         for each in self.assets:
-            scheme += f'/{each.nester}'
-            response = requests.post(scheme, auth=WS_AUTH)
+            payload = each.nester()
+            response = requests.post(scheme, data=payload, auth=WS_AUTH)
             _ = WSResponseHandler(response)
 
         return None

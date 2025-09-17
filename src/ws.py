@@ -64,10 +64,10 @@ class WSResponseHandler:
     def _output_content(self) -> None:
 
         now = datetime.datetime.now()
-        t_string = now.strftime('%H%M%S')
         d_string = now.strftime('%d%m%Y')
+        t_string = now.strftime('%H%M%S')
     
-        file_name = f'{t_string}_{d_string}_out.yaml'
+        file_name = f'{d_string}_{t_string}_out.yaml'
 
         with open(f'{OUTPUT}/{file_name}', 'w') as fp:
             yaml.dump(self.content, fp)

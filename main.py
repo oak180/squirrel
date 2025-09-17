@@ -18,7 +18,6 @@ def main():
     
     users.to_csv('user')
     
-    # FIXME Catalog.from_fetch
     # continue by validating the loaded resources
     # in src/assets.py, or in src/users.py?
 

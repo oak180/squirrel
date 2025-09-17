@@ -39,14 +39,13 @@ class UserAsset(AbstractAsset):
         else:
             d['password'] = pw
             return d
-
-
     
-    @property
-    def endpoint(self) -> str:
+    @classmethod
+    def endpoint(cls):
         return 'user'
-    
-    def fieldnames(self) -> list[str]:
+
+    @classmethod
+    def fieldnames(cls) -> list[str]:
         return ['username', 'systemId', 'givenName', 'familyName', 'gender']
     
     
