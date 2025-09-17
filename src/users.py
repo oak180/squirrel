@@ -17,7 +17,6 @@ class UserAsset(AbstractAsset):
     def catalog_id(self) -> str:
         return self.content.get('systemId')
     
-    @property
     def nester(self) -> dict[str, Any]:
         d = {
             'username': self.content.get('username'),
@@ -33,7 +32,7 @@ class UserAsset(AbstractAsset):
             }
         }
 
-        pw = input(f'Password for {d.get('systemId')}')
+        pw = input(f'Password for {d.get('systemId')}: ')
         if len(pw) < 8:
             raise ValueError('Password must be 8 or more characters')
         else:

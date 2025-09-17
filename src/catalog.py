@@ -62,7 +62,7 @@ class AbstractAsset(ABC):
         
         scheme = f'{WS_URI}/{cls.endpoint()}/{uuid}'
         response = requests.get(scheme, auth=WS_AUTH)
-        handler = WSResponseHandler(response, output=True) # TODO fetch_resource: set output to False
+        handler = WSResponseHandler(response, output=False)
         content = handler.content
         flat_content = cls.flattener(content)
 
@@ -83,7 +83,7 @@ class AssetCatalog:
     @property
     def catalog_name(self) -> str:
         """Returns the catalog name, usually matching the resource name"""
-        return self.asset_class.endpoint
+        return self.asset_class.endpoint()
 
     @staticmethod
     def _io_path(env_location: str, name: str, path: str | None = None, create: bool = False) -> Path:
@@ -107,7 +107,7 @@ class AssetCatalog:
 
         scheme = f'{WS_URI}/{asset_class.endpoint()}'
         response = requests.get(scheme, auth=WS_AUTH)
-        handler = WSResponseHandler(response)
+        handler = WSResponseHandler(response, output=False)
         results = handler.content.get('results')
         uuids = [each.get('uuid') for each in results]
         assets = [asset_class.fetch_resource(u) for u in uuids]
@@ -149,8 +149,8 @@ class AssetCatalog:
 
         for each in self.assets:
             payload = each.nester()
-            response = requests.post(scheme, data=payload, auth=WS_AUTH)
-            _ = WSResponseHandler(response)
+            response = requests.post(scheme, json=payload, auth=WS_AUTH)
+            _ = WSResponseHandler(response, output=True)
 
         return None
 
@@ -162,6 +162,6 @@ class AssetCatalog:
         for each in self.assets:
             scheme += f'/{each.uuid}'
             response = requests.delete(scheme, auth=WS_AUTH)
-            _ = WSResponseHandler(response)
+            _ = WSResponseHandler(response, output=True)
 
         return None

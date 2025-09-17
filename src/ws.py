@@ -4,6 +4,7 @@ import requests
 import yaml
 import logging
 import datetime
+import uuid
 
 from .env_vars import OUTPUT
 
@@ -66,8 +67,9 @@ class WSResponseHandler:
         now = datetime.datetime.now()
         d_string = now.strftime('%d%m%Y')
         t_string = now.strftime('%H%M%S')
+        unique = uuid.uuid4().hex[:8]
     
-        file_name = f'{d_string}_{t_string}_out.yaml'
+        file_name = f'{d_string}_{t_string}_{unique}_out.yaml'
 
         with open(f'{OUTPUT}/{file_name}', 'w') as fp:
             yaml.dump(self.content, fp)

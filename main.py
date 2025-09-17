@@ -14,8 +14,10 @@ WRITE_PATH = r'/home/user/Projects/squirrel/data/assets/fetched.catalog.yaml'
 def main():
     pprint('hello from squirrel')
 
+    users: AssetCatalog = AssetCatalog.from_csv('user', UserAsset)
+    users.to_post()
+
     users: AssetCatalog = AssetCatalog.from_fetch(UserAsset)
-    
     users.to_csv('user')
     
     # continue by validating the loaded resources
